@@ -21,14 +21,12 @@
             Delete &nbsp;&nbsp;<i class="fas fa-trash-alt"></i>
           </button>
         </div>
-        <div class="col-cols-4 col-md-auto">
-          <div class="card bg-light" v-if="status">
+        <div class="col-auto" v-if="status">
+          <div class="card bg-light">
             <div class="card-text" style="margin-right: 50px;">
               <strong>{{ selectedDataSizes.length }}</strong> File(s) selected
             </div>
-            <div class="card-text">
-              Total size: <strong>{{ selectedDataTotal }}</strong>
-            </div>
+            <div class="card-text">Total size: <strong>{{ selectedDataTotal }}</strong></div>
           </div>
         </div>
       </div>
@@ -36,47 +34,45 @@
       <hr />
 
       <!-- PART-1: LIST FILES -->
-      <ag-grid-vue style="width: 100%; height: 500px; border: 1px solid #e7e9ea; border-radius: 4px;"
-                   class="ag-theme-material"
-                   :row-height=60
-                   :columnDefs="columnDefs"
-                   :gridOptions="gridOptions"
-                   :autoGroupColumnDef="autoGroupColumnDef"
-                   :frameworkComponents="frameworkComponents"
-                   :suppressRowClickSelection="true"
-                   :groupSelectsChildren="true"
-                   :debug="true"
-                   :rowSelection="rowSelection"
+      <div class="container">
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <!-- Define your table header columns -->
+              <th scope="col">#</th>
+              <th scope="col">Name</th>
+              <th scope="col">Type</th>
+              <th scope="col">Size</th>
+              <th scope="col">Added</th>
+              <!-- Add more header columns as needed -->
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in data" :key="item.id">
+              <td>
+                <input type="checkbox" v-model="selectedItems" :value="item.id" />
+              </td>
+              <td>{{ item.type }}</td>
+              <td>{{ item.name }}</td>
+              <td>{{ item.added || item.date_created }}</td>
+              <td>{{ item.size || '' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-                   :defaultColDef="{
-                              enableValue: true,
-                              sortable: true,
-                              resizable: true,
-                              filter: true
-                              }"
 
-                   :enableRangeSelection="true"
-                   animateRows
-                   @rowClicked = "onRowClicked"
-                   @rowSelected = "onRowSelected"
-                   :paginationAutoPageSize="true"
-                   :pagination="true"
-                   @gridReady="onGridReady"
-                   :rowData="rowData">
-      </ag-grid-vue>
     </div>
 
     <!-- PART-3: DELETE FILE(S) -->
     <!-- Modal Component -->
-    <div class="modal" v-if="mShow" v-on:change="modal">
-      <div class="modal-dialog">
+    <div class="modal" v-if="mShow" v-on:change="modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
         <div class="modal-content">
-          <div class="modal-body">
-            Selected file(s) will be deleted?
-          </div>
+          <div class="modal-body">Selected file(s) will be deleted?</div>
           <div class="modal-footer">
-            <button class="btn btn-primary" @click="handleOk">OK</button>
-            <button class="btn btn-secondary" @click="$emit('close')">Cancel</button>
+            <button type="button" class="btn btn-secondary" @click="$emit('close')">Cancel</button>
+            <button type="button" class="btn btn-primary" @click="handleOk">OK</button>
           </div>
         </div>
       </div>
@@ -87,11 +83,10 @@
 
 
 <script>
-import { AgGridVue } from "ag-grid-vue3"
 import filetypeCellRenderer from "../filetypeCellRenderer.js" // uploaded file type validator
 
 import { mapState } from 'vuex'
-import { sizeFormatter, dateFormatter } from '../utils' // Ag-grid display format for file size and date
+import { sizeFormatter, dateFormatter } from '../utils.js' // Ag-grid display format for file size and date
 
 export default {
   data() {
@@ -109,9 +104,6 @@ export default {
       selectedDataSizes: [],
       selectedDataTotal: 0
     }
-  },
-  components: {
-    AgGridVue
   },
 
   beforeMount() {
@@ -250,25 +242,6 @@ export default {
 </script>
 
 <style lang="scss">
-@import "ag-grid-community/styles/ag-theme-material.css";
-
-.ag-theme-material {
-  font-size: 16px;
-}
-
-.ag-theme-material .ag-row,
-.ag-theme-material .ag-row:not(.ag-row-first) {
-  padding-top: 7px;
-}
-
-.ag-cell-focus,
-.ag-cell-no-focus {
-  border: none !important;
-}
-
-.ag-root-wrapper-body.ag-layout-normal {
-  border-radius: 4px;
-}
 
 /* Style buttons */
 .btn {

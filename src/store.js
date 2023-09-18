@@ -1,6 +1,8 @@
-import Vue from 'vue'
+import {createApp} from 'vue'
 import Vuex from 'vuex'
 import axios from 'axios'
+
+const Vue = createApp({})
 
 Vue.use(Vuex, axios)
 

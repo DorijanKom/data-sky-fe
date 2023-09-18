@@ -22,4 +22,4 @@ function dateFormatter(params) {
   return formattedTime
 }
 
-export { sizeFormatter, dateFormatter }
+export  { sizeFormatter, dateFormatter }

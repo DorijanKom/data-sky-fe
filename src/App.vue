@@ -12,7 +12,7 @@ import { RouterLink, RouterView } from 'vue-router'
 <script>
 import Header from './components/Header.vue'
 import Home from './components/Home.vue'
-export default {
+export  default {
   name: 'app',
   components: {
     Header,

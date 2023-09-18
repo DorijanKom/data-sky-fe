@@ -3,6 +3,8 @@ import './assets/main.css'
 import { createApp } from 'vue'
 import App from './App.vue'
 import axios from 'axios'
+import store from './store'
+import router from './router'
 
 const app = createApp(App)
 
@@ -23,7 +25,7 @@ import {
         faFile,
         faTrashAlt,
         faUpload,
-        faTasks
+        faTasks,
        } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -41,6 +43,8 @@ library.add(
     faUpload,
     faTasks
   )
+app.use(store);
+app.use(router);
 
 app.component('font-awesome-icon', FontAwesomeIcon)
 
@@ -49,5 +53,6 @@ app.config.productionTip = false
 axios.defaults.baseURL = 'http://localhost:9001'
 axios.defaults.xsrfHeaderName = "X-CSRFToken"
 axios.defaults.xsrfCookieName = 'csrftoken'
+
 
 app.mount('#app')
