@@ -1,6 +1,7 @@
 import {createApp} from 'vue'
 import Vuex from 'vuex'
 import axios from 'axios'
+import auth from './auth'
 
 const Vue = createApp({})
 
@@ -11,14 +12,22 @@ export default new Vuex.Store({
     rowData: []
   },
 
+  modules: {
+    auth,
+  },
+
   actions: {
     loadFiles({ commit }, directory_id) {
+
+      const apiDirectoryId = directory_id || '';
+
       axios
         .get('api/list-contents/', {
-          params: { directory_id: directory_id }
+          params: { pk: apiDirectoryId }
         })
         .then(data => {
           let rowData = data.data
+          console.log(rowData);
           commit('SET_FILES', rowData)
         })
         .catch(error => {
@@ -100,5 +109,5 @@ export default new Vuex.Store({
     POST_FILE(state, newFile) {
       state.rowData.push(newFile)
     }
-  }
+  }, 
 })

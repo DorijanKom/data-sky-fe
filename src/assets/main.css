@@ -1,10 +1,20 @@
 @import './base.css';
 
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+@media (max-width: 1024px) {
 
+#app {
+  padding: -10px;
+ .loginContainer  {
+  .mainLayout {
+    margin: -330px;
+  }
+ }
+  
+}
+}
+
+#app {
+  margin: 0 auto;
   font-weight: normal;
 }
 
@@ -21,15 +31,15 @@ a,
   }
 }
 
+
 @media (min-width: 1024px) {
   body {
-    display: flex;
-    place-items: center;
+    display: flex; 
+    flex: max-content;
   }
 
   #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
+    display: flex;
+    flex: max-content;
   }
 }

@@ -3,20 +3,17 @@ import { RouterLink, RouterView } from 'vue-router'
 </script>
 
 <template>
-  <div id="app">
-    <Header></Header>
-    <Home></Home>
-  </div>
+  <router-view/>
 </template>
 
 <script>
-import Header from './components/Header.vue'
-import Home from './components/Home.vue'
+import Layout from './components/Layout.vue'
+import Login from './components/Login.vue'
 export  default {
   name: 'app',
   components: {
-    Header,
-    Home
+    Layout,
+    Login
   }
 }
 </script>

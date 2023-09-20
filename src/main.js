@@ -51,6 +51,7 @@ app.component('font-awesome-icon', FontAwesomeIcon)
 app.config.productionTip = false
 
 axios.defaults.baseURL = 'http://localhost:9001'
+axios.defaults.withCredentials = true
 axios.defaults.xsrfHeaderName = "X-CSRFToken"
 axios.defaults.xsrfCookieName = 'csrftoken'
 

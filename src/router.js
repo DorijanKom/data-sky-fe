@@ -1,13 +1,14 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { checkSessionCookie } from "./auth";
+import { checkSessionCookie } from "./cookie";
+import store from "./store";
 import Home from './components/Home.vue'
-import Header from './components/Header.vue'
+import Layout from './components/Layout.vue'
 import Login from './components/Login.vue'
 
 const routes = [
     { path: '/', redirect: '/dashboard' },
-    { path: '/login', component: Login },
-    { path: '/dashboard', components: { Home, Header } , meta: { requiresAuth: true } },
+    { path: '/dashboard', component: Layout, meta: { requiresAuth: true } },
+    { path: '/login', component: Login, meta: { requiresAuth: false } },
   ];
   
   const router = createRouter({
@@ -15,14 +16,18 @@ const routes = [
     routes,
   });
 
-router.beforeEach((to, from, next) => {
-    const isAuthenticated = checkSessionCookie();
-  
-    if (to.matched.some(record => record.meta.requiresAuth) && !isAuthenticated) {
-      next('/login');
+  router.beforeEach((to, from, next) => {
+    const isAuthenticated = store.state.auth.isAuthenticated;
+
+    if (to.matched.some(record => record.meta.requiresAuth)) {
+        if (!isAuthenticated) {
+            next('/login'); // Redirect to login when authentication is required but not authenticated
+        } else {
+            next(); // Proceed to the route when authenticated
+        }
     } else {
-      next();
+        next(); // Proceed to the route when authentication is not required
     }
-  });
+});
 
 export default router;

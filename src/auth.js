@@ -1,8 +1,28 @@
-import Cookies from "js-cookie";
+// auth.js (Vuex store module)
+const state = {
+    isAuthenticated: false,
+};
 
-function checkSessionCookie() {
-  const sessionCookie = Cookies.get('data_sky_session');
-  return !!sessionCookie;
-}
+const mutations = {
+    setAuthenticated(state) {
+        state.isAuthenticated = true;
+    },
+    clearAuthenticated(state) {
+        state.isAuthenticated = false;
+    },
+};
 
-export { checkSessionCookie };
+const actions = {
+    login({ commit }) {
+        commit('setAuthenticated');
+    },
+    logout({ commit }) {
+        commit('clearAuthenticated');
+    },
+};
+
+export default {
+    state,
+    mutations,
+    actions,
+};

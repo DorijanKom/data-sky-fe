@@ -1,5 +1,25 @@
+<script setup>
+  import { RouterLink } from 'vue-router';
+  import axios from 'axios';
+  import { useStore } from 'vuex';
+
+  const store = useStore();
+
+  const logout = async () => {
+    try {
+      const response = axios.post('api/user/logout')
+      store.dispatch('logout');
+      console.log("message:", response)
+    } catch (error) {
+      console.error('error:', error)
+    }
+    
+    
+  }
+</script>
+
 <template>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top" style="padding: 0px 50px;"> <!-- Added fixed-top class -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top" style="padding: 0px 30px;"> <!-- Added fixed-top class -->
     <a class="navbar-brand" href="#">
       <i class="bi bi-cloud-haze2 col"></i>&nbsp; &nbsp; DataSky
     </a>
@@ -10,7 +30,7 @@
     <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
       <ul class="navbar-nav">
         <li class="nav-item">
-          <a class="nav-link" href="#">Download</a>
+          <router-link to="/login" class="nav-link text-white" @click="logout">Logout</router-link>
         </li>
       </ul>
     </div>

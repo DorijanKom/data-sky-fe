@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container d-flex flex-column justify-content-center">
 
     <br />
 
@@ -14,9 +14,9 @@
     <br />
 
     <!-- PART-3: DELETE FILE(S) -->
-    <div class="card bg-light">
-      <div class="row">
-        <div class="col-4">
+    <div class="d-flex flex-column bg-light">
+      <div class="d-flex px-2">
+        <div>
           <button class="btn btn-danger" @click="deleteFile()">
             Delete &nbsp;&nbsp;<i class="fas fa-trash-alt"></i>
           </button>
@@ -52,10 +52,11 @@
               <td>
                 <input type="checkbox" v-model="selectedItems" :value="item.id" />
               </td>
-              <td>{{ item.type }}</td>
               <td>{{ item.name }}</td>
-              <td>{{ item.added || item.date_created }}</td>
-              <td>{{ item.size || '' }}</td>
+              <td>{{ item.type }}</td>
+              <td>{{ item.size || item.date_created }}</td>
+              <td>{{ item.added || '' }}</td>
+              <td><button v-if="item.type !== 'directory'" type="button" class="btn btn-warning align-items-center">Download</button></td>
             </tr>
           </tbody>
         </table>
@@ -85,24 +86,25 @@
 <script>
 import filetypeCellRenderer from "../filetypeCellRenderer.js" // uploaded file type validator
 
-import { mapState } from 'vuex'
-import { sizeFormatter, dateFormatter } from '../utils.js' // Ag-grid display format for file size and date
+import { computed, ref } from 'vue';
+import { mapState, useStore } from 'vuex';
+import { sizeFormatter, dateFormatter } from '../utils.js'; // Ag-grid display format for file size and date
 
 export default {
+
+  setup() {
+    const store = useStore();
+    const data = computed(() => store.state.rowData);
+
+    return {
+      data,
+    }
+  },
+
   data() {
     return {
       selFile: null,
-      columnDefs: null,
-      autoGroupColumnDef: null,
-      frameworkComponents: null,
-      rowSelection: null,
-      gridOptions: {},
-      modal: false,
-      mShow: false,
-      result_id: null,
-      status: false,
-      selectedDataSizes: [],
-      selectedDataTotal: 0
+      directory_id: null,
     }
   },
 
@@ -166,9 +168,10 @@ export default {
     this.rowSelection = "multiple";
 
   },
+
   mounted() {
-    this.$store.dispatch('loadFiles')
-    this.gridOApi = this.gridOptions.api;
+    const directory_id = null;
+    this.$store.dispatch('loadFiles', directory_id);
   },
 
   computed: {
@@ -242,7 +245,6 @@ export default {
 </script>
 
 <style lang="scss">
-
 /* Style buttons */
 .btn {
   margin-top: 20px;
