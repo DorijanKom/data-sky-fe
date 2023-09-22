@@ -1,5 +1,5 @@
 <template>
-  <div class="container d-flex flex-column justify-content-center align-items-center">
+  <div class="container d-flex flex-column justify-content-center">
 
     <br />
 
@@ -7,7 +7,7 @@
     <div class="card bg-light">
       <form class="d-flex justify-content-center align-items-center">
         <input type="file" @change="onFileSelected" ref="form" class="form-control-file" />
-          <button class="btn btn-primary" @click="submitFile()">
+        <button class="btn btn-primary" @click="submitFile()">
           Submit &nbsp; &nbsp;<i class="bi bi-cloud-upload"></i>
         </button>
       </form>
@@ -50,7 +50,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, index) in data.results" :key="index">
+            <tr v-for="(item, index) in paginatedData" :key="index">
               <td>
                 <input type="checkbox" v-model="selectedItems" :value="item.id" />
               </td>
@@ -65,10 +65,30 @@
               <td>{{ item.size }}</td>
               <td>{{ item.date_created }}</td>
               <td><button @click="onRowClicked(item)" v-if="item.type !== 'directory'" type="button"
-                  class="btn btn-warning align-items-center"><i class="bi bi-box-arrow-in-down"></i> Download</button></td>
+                  class="btn btn-warning align-items-center"><i class="bi bi-box-arrow-in-down"></i> Download</button>
+              </td>
             </tr>
           </tbody>
         </table>
+        <nav aria-label="Page navigation">
+          <ul class="pagination justify-content-center">
+            <li class="page-item" :class="{ disabled: currentPage === 1 }">
+              <a class="page-link" @click="prevPage" href="#" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+            <li class="page-item" v-for="page in totalPages" :key="page" :class="{ active: currentPage === page }">
+              <a class="page-link" @click="changePage(page)" href="#">
+                {{ page }}
+              </a>
+            </li>
+            <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+              <a class="page-link" @click="nextPage" href="#" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
         <button class="btn btn-info" @click="goBack" v-if="directoryHistory.length > 1"><i
             class="bi bi-arrow-return-left"></i></button>
       </div>
@@ -118,6 +138,8 @@ export default {
     return {
       selFile: null,
       directory_id: null,
+      currentPage: 1,
+      itemsPerPage: 7,
     }
   },
 
@@ -151,10 +173,10 @@ export default {
       },
       {
         headerName: 'Added',
-        field: 'since_added',
+        field: 'date_created', // Assuming 'date_created' is the field containing the date
         width: 90,
         sort: 'desc',
-        valueFormatter: dateFormatter
+        valueFormatter: dateFormatter,
       }
     ]
 
@@ -189,10 +211,35 @@ export default {
   computed: {
     ...mapState([
       'rowData'
-    ])
+    ]),
 
+    paginatedData() {
+      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+      const endIndex = startIndex + this.itemsPerPage;
+      return this.data.results.slice(startIndex, endIndex);
+    },
+
+    totalPages() {
+      return Math.ceil(this.data.results.length / this.itemsPerPage);
+    },
   },
   methods: {
+
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage -= 1;
+      }
+    },
+    // Change to the next page
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage += 1;
+      }
+    },
+    // Change to a specific page
+    changePage(page) {
+      this.currentPage = page;
+    },
 
     onFileSelected(event) {
       this.selFile = event.target.files[0];
@@ -272,7 +319,7 @@ export default {
       let filename = event.name
       this.$store.dispatch('downloadFile', file_id)
 
-    }
+    },
   }
 }
 
