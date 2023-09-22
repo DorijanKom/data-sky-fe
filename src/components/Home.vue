@@ -173,7 +173,7 @@ export default {
       },
       {
         headerName: 'Added',
-        field: 'date_created', // Assuming 'date_created' is the field containing the date
+        field: 'date_created',
         width: 90,
         sort: 'desc',
         valueFormatter: dateFormatter,
@@ -230,13 +230,13 @@ export default {
         this.currentPage -= 1;
       }
     },
-    // Change to the next page
+
     nextPage() {
       if (this.currentPage < this.totalPages) {
         this.currentPage += 1;
       }
     },
-    // Change to a specific page
+
     changePage(page) {
       this.currentPage = page;
     },
@@ -319,7 +319,7 @@ export default {
       let filename = event.name
       this.$store.dispatch('downloadFile', file_id)
 
-    },
+    }
   }
 }
 
