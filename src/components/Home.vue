@@ -5,9 +5,9 @@
 
     <!-- PART-2: UPLOAD A FILE -->
     <div class="card bg-light">
-      <form class="d-flex justify-content-center align-items-center">
+      <form ref="fileForm" class="d-flex justify-content-center align-items-center" @submit.prevent="submitFile">
         <input type="file" @change="onFileSelected" ref="form" class="form-control-file" />
-        <button class="btn btn-primary" @click="submitFile()">
+        <button class="btn btn-primary">
           Submit &nbsp; &nbsp;<i class="bi bi-cloud-upload"></i>
         </button>
       </form>
@@ -34,9 +34,11 @@
       </div>
 
       <hr />
-
+      <div v-if="isLoading" class="spinner-border" role="status">
+        <span class="sr-only"></span>
+      </div>
       <!-- PART-1: LIST FILES -->
-      <div class="container">
+      <div v-else class="container">
         <table class="table table-bordered">
           <thead>
             <tr>
@@ -117,7 +119,7 @@
 <script>
 import filetypeCellRenderer from "../filetypeCellRenderer.js";
 
-import { computed, ref } from 'vue';
+import { computed, onBeforeMount, ref } from 'vue';
 import { mapState, useStore } from 'vuex';
 import { sizeFormatter, dateFormatter } from '../utils.js';
 
@@ -138,74 +140,17 @@ export default {
     return {
       selFile: null,
       directory_id: null,
+      selectedItems: [],
       currentPage: 1,
       itemsPerPage: 7,
+      isLoading: true,
     }
   },
 
-  beforeMount() {
-    this.columnDefs = [
-      {
-        headerName: 'Name',
-        field: 'name',
-        width: 300,
-        filterParams: { newRowsAction: "keep" },
-        checkboxSelection: params => {
-          return params.columnApi.getRowGroupColumns().length === 0;
-        },
-        headerCheckboxSelection: function (params) {
-          return params.columnApi.getRowGroupColumns().length === 0;
-        },
-      },
-      {
-        headerName: 'Filetype',
-        field: 'filetype',
-        width: 55,
-        cellRenderer: 'filetypeCellRenderer',
-        filterParams: { newRowsAction: "keep" },
-      },
-      {
-        headerName: 'Size',
-        field: 'size',
-        valueFormatter: sizeFormatter,
-        width: 55,
-        filterParams: { newRowsAction: "keep" }
-      },
-      {
-        headerName: 'Added',
-        field: 'date_created',
-        width: 90,
-        sort: 'desc',
-        valueFormatter: dateFormatter,
-      }
-    ]
-
-    this.frameworkComponents = {
-      filetypeCellRenderer: filetypeCellRenderer
-    }
-
-    this.autoGroupColumnDef = {
-      headerName: "Group",
-      width: 250,
-      field: "name",
-      valueGetter: params => {
-        if (params.node.group) {
-          return params.node.key;
-        } else {
-          return params.data[params.colDef.field];
-        }
-      },
-      headerCheckboxSelection: true,
-      cellRenderer: "agGroupCellRenderer",
-      cellRendererParams: { checkbox: true }
-    };
-
-    this.rowSelection = "multiple";
-
-  },
 
   mounted() {
-    this.$store.dispatch('loadFiles', this.directory_id);
+    console.log("Test");
+    this.fetchData();
   },
 
   computed: {
@@ -214,16 +159,33 @@ export default {
     ]),
 
     paginatedData() {
-      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-      const endIndex = startIndex + this.itemsPerPage;
-      return this.data.results.slice(startIndex, endIndex);
+      if (this.data && this.data.results) {
+        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+        const endIndex = startIndex + this.itemsPerPage;
+        return this.data.results.slice(startIndex, endIndex);
+      }
+      return []; // Provide a default value if data is undefined
     },
 
     totalPages() {
-      return Math.ceil(this.data.results.length / this.itemsPerPage);
+      if (this.data && this.data.results) {
+        return Math.ceil(this.data.results.length / this.itemsPerPage);
+      }
+      return 0; // Provide a default value if data is undefined
     },
   },
   methods: {
+
+    fetchData() {
+      console.log(this.directory_id);
+      this.$store.dispatch('loadFiles', this.directory_id)
+        .then(() => {
+          this.isLoading = false;
+        })
+        .catch(error => {
+          console.error('Failed to fetch data:', error);
+        });
+    },
 
     prevPage() {
       if (this.currentPage > 1) {
@@ -250,8 +212,9 @@ export default {
       if (directoryHistory.length > 1) { // Ensure there are previous directories in history
         directoryHistory.pop(); // Remove the current directory
         const previousDirectory = directoryHistory[directoryHistory.length - 1]; // Get the previous directory
-        this.$store.commit('POP_DIRECTORY'); // Commit mutation to pop directory from history
-        this.$store.dispatch('loadFiles', previousDirectory); // Load the previous directory
+        let directory = this.$store.commit('POP_DIRECTORY'); // Commit mutation to pop directory from history
+        this.directory_id = previousDirectory;
+        this.fetchData();
       }
     },
 
@@ -270,9 +233,11 @@ export default {
       } else { this.status = false }
     },
 
-    submitFile() {
-      console.log(this.directory_id);
-      console.log(this.selFile);
+    submitFile(event) {
+      if (this.isLoading) {
+        alert('Data is still loading. Please wait.');
+        return;
+      }
       if (this.selFile) {
         if (this.selFile.size < 2 * 1024 * 1024 * 1024) {
           if (this.directory_id === null) {
@@ -282,7 +247,11 @@ export default {
             "file": this.selFile,
             "directory": this.directory_id
           }
+
+          event.preventDefault();
+
           this.$store.dispatch('postFile', formData);
+          this.$refs.fileForm.reset();
         } else {
           alert("File size must be smaller than 2GB")
         }
@@ -293,11 +262,12 @@ export default {
 
     loadDirectoryContents(directory_id) {
       this.directory_id = directory_id;
+      console.log(this.directory_id);
       this.$store.dispatch('loadFiles', directory_id);
     },
 
     deleteFile() {
-      const selectedNodes = this.gridApi.getSelectedNodes()
+      const selectedNodes = this.selectedItems
       if (selectedNodes.length > 0) {
         const selectedData = selectedNodes.map(node => node.data);
         const result_id = selectedData.map(node => node.file_id)

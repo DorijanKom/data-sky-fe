@@ -48,6 +48,7 @@ export default new Vuex.Store({
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        timeout: 10000,
       };
       axios
         .post('api/file/', formData, config) // Update the URL to match the correct origin
@@ -56,7 +57,7 @@ export default new Vuex.Store({
           dispatch('loadFiles');
         })
         .catch(error => {
-          console.error('Error:', error);
+          console.error('Error:', error.config);
         });
     },
     
