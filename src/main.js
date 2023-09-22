@@ -5,6 +5,7 @@ import App from './App.vue'
 import axios from 'axios'
 import store from './store'
 import router from './router'
+import { checkSessionCookie } from './cookie'
 
 const app = createApp(App)
 

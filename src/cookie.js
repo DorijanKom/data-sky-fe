@@ -1,9 +1,8 @@
 import Cookies from "js-cookie";
 
 function checkSessionCookie() {
-  const sessionCookie = Cookies.get('data_sky_session');
-  console.log(sessionCookie)
-  return !!sessionCookie;
+  const sessionCookie = Cookies.get('csrftoken');
+  return sessionCookie;
 }
 
 export { checkSessionCookie };

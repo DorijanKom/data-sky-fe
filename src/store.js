@@ -1,7 +1,8 @@
-import {createApp} from 'vue'
+import { createApp } from 'vue'
 import Vuex from 'vuex'
 import axios from 'axios'
 import auth from './auth'
+import { checkSessionCookie } from './cookie'
 
 const Vue = createApp({})
 
@@ -9,7 +10,8 @@ Vue.use(Vuex, axios)
 
 export default new Vuex.Store({
   state: {
-    rowData: []
+    rowData: [],
+    directoryHistory: [],
   },
 
   modules: {
@@ -22,23 +24,22 @@ export default new Vuex.Store({
       const apiDirectoryId = directory_id || '';
 
       axios
-        .get('api/list-contents/', {
-          params: { pk: apiDirectoryId }
-        })
+        .get('api/list-contents/' + apiDirectoryId)
         .then(data => {
-          let rowData = data.data
-          console.log(rowData);
-          commit('SET_FILES', rowData)
+          let rowData = data.data;
+          commit('SET_FILES', rowData);
+          commit('PUSH_DIRECTORY', apiDirectoryId);
         })
         .catch(error => {
           console.log(error)
         })
     },
 
-    postFile({ dispatch, commit }, { newFile, directory_id }) {
-      const formData = new FormData()
-      formData.append('file', newFile)
-      formData.append('directory', directory_id)
+    postFile({ dispatch, commit }, { file, directory }) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('directory', directory);
+
       const config = {
         onUploadProgress(e) {
           const percentCompleted = Math.round((e.loaded * 100) / e.total);
@@ -49,17 +50,16 @@ export default new Vuex.Store({
         },
       };
       axios
-        .post('api/file/', formData, config)
+        .post('api/file/', formData, config) // Update the URL to match the correct origin
         .then(() => {
-
           commit('POST_FILE', file);
-
           dispatch('loadFiles');
         })
         .catch(error => {
           console.error('Error:', error);
         });
     },
+    
 
     deleteFilesAndDirectories({ dispatch }, deleteData) {
       axios
@@ -85,29 +85,46 @@ export default new Vuex.Store({
         })
     },
 
-    downloadFile({ dispatch }, filename) {
-      axios({
-        url: `media/${filename}`,
-        method: 'GET',
-        responseType: 'blob',
-      })
-        .then((res) => {
-          const url = window.URL.createObjectURL(new Blob([res.data]))
-          const link = document.createElement('a')
-          link.href = url
-          link.setAttribute('download', filename)
-          document.body.appendChild(link)
-          link.click()
-        })
-    }
-  },
+    downloadFile({ dispatch }, fileId) {
+      axios.get(`api/file/${fileId}`)
+        .then((response) => {
+          console.log(response);
+          const presignedUrl = response.data;
 
-  mutations: {
-    SET_FILES(state, files) {
-      state.rowData = files
+          const filename =
+            response.headers['content-disposition'] ||
+            presignedUrl.substring(presignedUrl.lastIndexOf('/') + 1);
+
+            const link = document.createElement('a');
+            link.href = presignedUrl;
+            link.download = filename;
+            if (document.body.contains(link)) {
+              document.body.removeChild(link);
+            }
+      
+            link.click();
+        })
+        .catch((error) => {
+           console.error('Error fetching presigned URL:', error);
+        })
+      }
     },
-    POST_FILE(state, newFile) {
-      state.rowData.push(newFile)
-    }
-  }, 
-})
+
+    mutations: {
+      SET_FILES(state, files) {
+        state.rowData = files
+      },
+      POST_FILE(state, newFile) {
+        if (!Array.isArray(state.rowData)) {
+          state.rowData = [];
+        }
+        state.rowData.push(newFile);
+      },
+      PUSH_DIRECTORY(state, directory) {
+        state.directoryHistory.push(directory);
+      },
+      POP_DIRECTORY(state) {
+        state.directoryHistory.pop();
+      },
+    },
+  })

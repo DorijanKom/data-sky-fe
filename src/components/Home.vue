@@ -1,14 +1,16 @@
 <template>
-  <div class="container d-flex flex-column justify-content-center">
+  <div class="container d-flex flex-column justify-content-center align-items-center">
 
     <br />
 
     <!-- PART-2: UPLOAD A FILE -->
     <div class="card bg-light">
-      <input type="file" v-on:change="selFile" ref="form" class="form-control-file" />
-      <button class="btn btn-primary" @click="submitFile()">
-        Submit &nbsp; &nbsp;<i class="fas fa-upload"></i>
-      </button>
+      <form class="d-flex justify-content-center align-items-center">
+        <input type="file" @change="onFileSelected" ref="form" class="form-control-file" />
+          <button class="btn btn-primary" @click="submitFile()">
+          Submit &nbsp; &nbsp;<i class="bi bi-cloud-upload"></i>
+        </button>
+      </form>
     </div>
 
     <br />
@@ -18,7 +20,7 @@
       <div class="d-flex px-2">
         <div>
           <button class="btn btn-danger" @click="deleteFile()">
-            Delete &nbsp;&nbsp;<i class="fas fa-trash-alt"></i>
+            Delete &nbsp;&nbsp;<i class="bi bi-trash3"></i>
           </button>
         </div>
         <div class="col-auto" v-if="status">
@@ -48,18 +50,27 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in data" :key="item.id">
+            <tr v-for="(item, index) in data.results" :key="index">
               <td>
                 <input type="checkbox" v-model="selectedItems" :value="item.id" />
               </td>
-              <td>{{ item.name }}</td>
+              <td>
+                <span v-if="item.type === 'directory'" @click="loadDirectoryContents(item.id)"
+                  style="cursor: pointer; text-decoration: underline;">
+                  {{ item.name }}
+                </span>
+                <span v-else>{{ item.name }}</span>
+              </td>
               <td>{{ item.type }}</td>
-              <td>{{ item.size || item.date_created }}</td>
-              <td>{{ item.added || '' }}</td>
-              <td><button v-if="item.type !== 'directory'" type="button" class="btn btn-warning align-items-center">Download</button></td>
+              <td>{{ item.size }}</td>
+              <td>{{ item.date_created }}</td>
+              <td><button @click="onRowClicked(item)" v-if="item.type !== 'directory'" type="button"
+                  class="btn btn-warning align-items-center"><i class="bi bi-box-arrow-in-down"></i> Download</button></td>
             </tr>
           </tbody>
         </table>
+        <button class="btn btn-info" @click="goBack" v-if="directoryHistory.length > 1"><i
+            class="bi bi-arrow-return-left"></i></button>
       </div>
 
 
@@ -84,20 +95,22 @@
 
 
 <script>
-import filetypeCellRenderer from "../filetypeCellRenderer.js" // uploaded file type validator
+import filetypeCellRenderer from "../filetypeCellRenderer.js";
 
 import { computed, ref } from 'vue';
 import { mapState, useStore } from 'vuex';
-import { sizeFormatter, dateFormatter } from '../utils.js'; // Ag-grid display format for file size and date
+import { sizeFormatter, dateFormatter } from '../utils.js';
 
 export default {
 
   setup() {
     const store = useStore();
     const data = computed(() => store.state.rowData);
+    const directoryHistory = computed(() => store.state.directoryHistory);
 
     return {
       data,
+      directoryHistory,
     }
   },
 
@@ -170,8 +183,7 @@ export default {
   },
 
   mounted() {
-    const directory_id = null;
-    this.$store.dispatch('loadFiles', directory_id);
+    this.$store.dispatch('loadFiles', this.directory_id);
   },
 
   computed: {
@@ -182,11 +194,18 @@ export default {
   },
   methods: {
 
-    onGridReady(params) {
-      this.gridApi = params.api;
-      this.columnApi = params.columnApi;
-      params.api.sizeColumnsToFit();
-      params.api.setRowData();
+    onFileSelected(event) {
+      this.selFile = event.target.files[0];
+    },
+
+    goBack() {
+      const directoryHistory = this.$store.state.directoryHistory; // Get the directory history
+      if (directoryHistory.length > 1) { // Ensure there are previous directories in history
+        directoryHistory.pop(); // Remove the current directory
+        const previousDirectory = directoryHistory[directoryHistory.length - 1]; // Get the previous directory
+        this.$store.commit('POP_DIRECTORY'); // Commit mutation to pop directory from history
+        this.$store.dispatch('loadFiles', previousDirectory); // Load the previous directory
+      }
     },
 
     onRowSelected(event) {
@@ -205,14 +224,29 @@ export default {
     },
 
     submitFile() {
-      if (this.selFile.size < 5 * 1024 * 1024) {
-        var vm = this
-        const fd = new FormData()
-        fd.append('file', vm.selFile)
-        this.$store.dispatch('postFile', fd)
+      console.log(this.directory_id);
+      console.log(this.selFile);
+      if (this.selFile) {
+        if (this.selFile.size < 2 * 1024 * 1024 * 1024) {
+          if (this.directory_id === null) {
+            this.directory_id = '';
+          }
+          const formData = {
+            "file": this.selFile,
+            "directory": this.directory_id
+          }
+          this.$store.dispatch('postFile', formData);
+        } else {
+          alert("File size must be smaller than 2GB")
+        }
       } else {
-        alert("File size must be smaller than 5MB")
+        alert("Please select a file");
       }
+    },
+
+    loadDirectoryContents(directory_id) {
+      this.directory_id = directory_id;
+      this.$store.dispatch('loadFiles', directory_id);
     },
 
     deleteFile() {
@@ -234,9 +268,9 @@ export default {
     },
 
     onRowClicked(event) {
-      let file_id = event.node.data.file_id
-      let filename = event.node.data.name
-      this.$store.dispatch('downloadFile', filename)
+      let file_id = event.id
+      let filename = event.name
+      this.$store.dispatch('downloadFile', file_id)
 
     }
   }
