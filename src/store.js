@@ -61,11 +61,14 @@ export default new Vuex.Store({
           console.error('Error:', error.config);
         });
     },
-    
+
 
     deleteFilesAndDirectories({ dispatch }, deleteData) {
       axios
-        .delete('api/directory/', {
+        .delete('api/directory', {
+          headers: {
+            'Content-Type': 'application/json',
+          },
           data: deleteData,
         })
         .then(() => {
@@ -78,13 +81,16 @@ export default new Vuex.Store({
 
     createDirectory({ dispatch, commit }, newDirectory) {
       axios
-        .post('api/directory/', newDirectory)
+        .post('api/directory/', {
+          name: newDirectory.name,
+          parent_directory: newDirectory.parent_directory
+        })
         .then(() => {
           dispatch('loadFiles');
         })
         .catch(error => {
-          console.error('Error:', error)
-        })
+          console.error('Error:', error);
+        });
     },
 
     downloadFile({ dispatch }, fileId) {
@@ -97,36 +103,36 @@ export default new Vuex.Store({
             response.headers['content-disposition'] ||
             presignedUrl.substring(presignedUrl.lastIndexOf('/') + 1);
 
-            const link = document.createElement('a');
-            link.href = presignedUrl;
-            link.download = filename;
-            if (document.body.contains(link)) {
-              document.body.removeChild(link);
-            }
-      
-            link.click();
+          const link = document.createElement('a');
+          link.href = presignedUrl;
+          link.download = filename;
+          if (document.body.contains(link)) {
+            document.body.removeChild(link);
+          }
+
+          link.click();
         })
         .catch((error) => {
-           console.error('Error fetching presigned URL:', error);
+          console.error('Error fetching presigned URL:', error);
         })
-      }
-    },
+    }
+  },
 
-    mutations: {
-      SET_FILES(state, files) {
-        state.rowData = files
-      },
-      POST_FILE(state, newFile) {
-        if (!Array.isArray(state.rowData)) {
-          state.rowData = [];
-        }
-        state.rowData.push(newFile);
-      },
-      PUSH_DIRECTORY(state, directory) {
-        state.directoryHistory.push(directory);
-      },
-      POP_DIRECTORY(state) {
-        state.directoryHistory.pop();
-      },
+  mutations: {
+    SET_FILES(state, files) {
+      state.rowData = files
     },
-  })
+    POST_FILE(state, newFile) {
+      if (!Array.isArray(state.rowData)) {
+        state.rowData = [];
+      }
+      state.rowData.push(newFile);
+    },
+    PUSH_DIRECTORY(state, directory) {
+      state.directoryHistory.push(directory);
+    },
+    POP_DIRECTORY(state) {
+      state.directoryHistory.pop();
+    },
+  },
+})

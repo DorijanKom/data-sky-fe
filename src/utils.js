@@ -1,7 +1,6 @@
 import moment from 'moment'
 
-function sizeFormatter(params) {
-  let size = params.value
+function sizeFormatter(size) {
   // #2**10 = 1024
   const power = 2**10
   let n = 0

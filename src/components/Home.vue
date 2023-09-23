@@ -19,16 +19,16 @@
     <div class="d-flex flex-column bg-light">
       <div class="d-flex px-2">
         <div>
-          <button class="btn btn-danger" @click="deleteFile()">
+          <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteContents">
             <i class="bi bi-trash3"></i> Delete &nbsp;&nbsp;
           </button>
         </div>
         <div class="d-flex px-2">
-          <button class="btn btn-info"  @click="createDirectory()">
+          <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#createDirectory">
             <i class="bi bi-folder-plus"></i> Create directory &nbsp;&nbsp;
           </button>
         </div>
-<!--         <div class="col-auto" v-if="status">
+        <!--         <div class="col-auto" v-if="status">
           <div class="card bg-light">
             <div class="card-text" style="margin-right: 50px;">
               <strong>{{ selectedDataSizes.length }}</strong> File(s) selected
@@ -74,8 +74,8 @@
               <div class="d-flex justify-content-center align-items-center">
                 <td>
                   <button @click="onRowClicked(item)" v-if="item.type !== 'directory'" type="button"
-                  class="btn btn-warning align-items-center"><i class="bi bi-box-arrow-in-down"></i> Download</button>
-              </td>
+                    class="btn btn-warning align-items-center"><i class="bi bi-box-arrow-in-down"></i> Download</button>
+                </td>
               </div>
             </tr>
           </tbody>
@@ -108,55 +108,51 @@
 
     <!-- PART-3: DELETE FILE(S) -->
     <!-- Modal Component -->
-    <div class="modal" v-if="modalShow" v-on:change="modal" tabindex="-1" role="dialog">
+    <div class="modal" id="deleteContents" v-show="modalShow" tabindex="-1" role="dialog">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-body">Selected file(s) will be deleted?</div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="$emit('close')">Cancel</button>
-            <button type="button" class="btn btn-primary" @click="handleOk">OK</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @click="deleteFile">Delete</button>
           </div>
         </div>
       </div>
     </div>
 
-    
-    <!-- PART-4: CREATE DIRECTORY -->
-    <!-- Modal Component -->
-    <Transition>
-      <div class="modal" ref="createDirectory" v-show="modalShow" tabindex="-1" role="dialog">
+  </div>
+  <!-- PART-4: CREATE DIRECTORY -->
+  <!-- Modal Component -->
+  <Transition>
+    <div class="modal" id="createDirectory" v-show="modalShow" tabindex="-1" role="dialog">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Create Directory</h5>
           </div>
           <div class="modal-body">
-              <form>
-                <div class="form-group">
-                  <label for="name" class="col-form-label">Directory name</label>
-                  <input type="text" class="form-control" id="name">
-                </div>
-              </form>
+            <form>
+              <div class="form-group">
+                <label for="name" class="col-form-label">Directory name</label>
+                <input type="text" v-model="directoryName" class="form-control" id="name">
+              </div>
+            </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="$emit('close')">Cancel</button>
-            <button type="button" class="btn btn-primary" @click="handleOk">Create</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" @click="createDirectory">Create</button>
           </div>
         </div>
       </div>
     </div>
-    </Transition>
-
-  </div>
+  </Transition>
 </template>
 
 
 <script>
-import filetypeCellRenderer from "../filetypeCellRenderer.js";
 
-import { computed, onBeforeMount, ref, Transition } from 'vue';
+import { computed, ref, Transition } from 'vue';
 import { mapState, useStore } from 'vuex';
-import { sizeFormatter, dateFormatter } from '../utils.js';
 
 export default {
 
@@ -180,6 +176,7 @@ export default {
       itemsPerPage: 7,
       isLoading: true,
       modalShow: false,
+      directoryName: "",
     }
   },
 
@@ -254,21 +251,6 @@ export default {
       }
     },
 
-    onRowSelected(event) {
-      const selectedNodes = this.gridApi.getSelectedNodes();
-      const selectedData = selectedNodes.map(node => node.data);
-      const selectedDataStringPresentation = selectedData.map(node => node.name + ' ' + node.file_id).join(', ');
-      this.selectedDataSizes = selectedData.map(node => node.size)
-
-      // get the total size
-      const add = (a, b) => a + b
-      if (this.selectedDataSizes.length > 0) {
-        this.status = true
-        const totalSize = { value: this.selectedDataSizes.reduce(add) }
-        this.selectedDataTotal = sizeFormatter(totalSize)
-      } else { this.status = false }
-    },
-
     submitFile(event) {
       if (this.isLoading) {
         alert('Data is still loading. Please wait.');
@@ -302,26 +284,44 @@ export default {
     },
 
     deleteFile() {
-      const selectedNodes = this.selectedItems
-      if (selectedNodes.length > 0) {
-        const selectedData = selectedNodes.map(node => node.data);
-        const result_id = selectedData.map(node => node.file_id)
-        console.log(result_id)
-        this.result_id = result_id
-        this.modalShow = true
-        this.modal = true
+      const fileIdsToDelete = [];
+      const directoryIdsToDelete = [];
+
+      console.log(this.selectedItems)
+
+      this.paginatedData.forEach((item) => {
+        if (this.selectedItems.includes(item.id)) {
+          if (item.type === 'directory') {
+            directoryIdsToDelete.push(item.id);
+          } else {
+            fileIdsToDelete.push(item.id);
+          }
+        }
+      });
+
+      const deleteData = {
+        'file_ids': fileIdsToDelete,
+        'directory_ids': directoryIdsToDelete
       }
+
+      this.$store.dispatch('deleteFilesAndDirectories', deleteData);
+    },
+
+    showDirectoryModal() {
+      this.modalShow = true;
+      console.log(this.modalShow);
     },
 
     createDirectory() {
-      this.modalShow = true;
-      console.log(this.modalShow)
-    },
-
-    handleOk() {
-      this.$store.dispatch('deleteFile', this.result_id)
-      this.modalShow = false
-      this.status = false
+      if (this.directory_id === null) {
+        this.directory_id = '';
+      }
+      const directoryData = {
+        'name': this.directoryName,
+        'parent_directory': this.directory_id
+      };
+      this.$store.dispatch('createDirectory', directoryData);
+      this.modalShow = false;
     },
 
     onRowClicked(event) {
