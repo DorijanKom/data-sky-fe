@@ -7,8 +7,8 @@ import { RouterLink, RouterView } from 'vue-router'
 </template>
 
 <script>
-import Layout from './components/Layout.vue'
-import Login from './components/Login.vue'
+import Layout from './views/Layout.vue'
+import Login from './views/Login.vue'
 export  default {
   name: 'app',
   components: {

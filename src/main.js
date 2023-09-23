@@ -5,12 +5,11 @@ import App from './App.vue'
 import axios from 'axios'
 import store from './store'
 import router from './router'
-import { checkSessionCookie } from './cookie'
 
 const app = createApp(App)
 
-import 'bootstrap/dist/css/bootstrap.css'
-import 'bootstrap/dist/js/bootstrap'
+import 'bootstrap/dist/css/bootstrap.css';
+import 'bootstrap/dist/js/bootstrap.js';
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 

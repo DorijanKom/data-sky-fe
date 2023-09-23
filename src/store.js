@@ -1,8 +1,7 @@
-import { createApp } from 'vue'
-import Vuex from 'vuex'
-import axios from 'axios'
-import auth from './auth'
-import { checkSessionCookie } from './cookie'
+import { createApp } from 'vue';
+import Vuex from 'vuex';
+import axios from 'axios';
+import auth from './auth';
 
 const Vue = createApp({})
 
@@ -22,13 +21,15 @@ export default new Vuex.Store({
     loadFiles({ commit }, directory_id) {
 
       const apiDirectoryId = directory_id || '';
+      console.log(apiDirectoryId);
 
       axios
-        .get('api/list-contents/' + apiDirectoryId)
+        .get(`api/list-contents/${apiDirectoryId}`)
         .then(data => {
           let rowData = data.data;
           commit('SET_FILES', rowData);
           commit('PUSH_DIRECTORY', apiDirectoryId);
+          console.log(rowData);
         })
         .catch(error => {
           console.log(error)
@@ -54,7 +55,7 @@ export default new Vuex.Store({
         .post('api/file/', formData, config) // Update the URL to match the correct origin
         .then(() => {
           commit('POST_FILE', file);
-          dispatch('loadFiles');
+          dispatch('loadFiles', directory);
         })
         .catch(error => {
           console.error('Error:', error.config);

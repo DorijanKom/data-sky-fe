@@ -2,7 +2,6 @@
   import { RouterLink } from 'vue-router';
   import axios from 'axios';
   import { useStore } from 'vuex';
-  import { checkSessionCookie } from '../cookie';
 
   const store = useStore();
 

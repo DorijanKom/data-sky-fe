@@ -1,14 +1,14 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { checkSessionCookie } from "./cookie";
 import store from "./store";
-import Home from './components/Home.vue'
-import Layout from './components/Layout.vue'
-import Login from './components/Login.vue'
+import Layout from './views/Layout.vue';
+import Login from './views/Login.vue';
+import Register from './views/Register.vue'
 
 const routes = [
     { path: '/', redirect: '/dashboard' },
     { path: '/dashboard', component: Layout, meta: { requiresAuth: true } },
     { path: '/login', component: Login, meta: { requiresAuth: false } },
+    { path: '/register', component: Register, meta: { requiresAuth: false } },
   ];
   
   const router = createRouter({

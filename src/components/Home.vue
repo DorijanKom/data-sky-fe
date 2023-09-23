@@ -5,7 +5,7 @@
 
     <!-- PART-2: UPLOAD A FILE -->
     <div class="card bg-light">
-      <form ref="fileForm" class="d-flex justify-content-center align-items-center" @submit.prevent="submitFile">
+      <form ref="fileForm" class="d-flex flex-column" @submit.prevent="submitFile">
         <input type="file" @change="onFileSelected" ref="form" class="form-control-file" />
         <button class="btn btn-primary">
           Submit &nbsp; &nbsp;<i class="bi bi-cloud-upload"></i>
@@ -20,17 +20,22 @@
       <div class="d-flex px-2">
         <div>
           <button class="btn btn-danger" @click="deleteFile()">
-            Delete &nbsp;&nbsp;<i class="bi bi-trash3"></i>
+            <i class="bi bi-trash3"></i> Delete &nbsp;&nbsp;
           </button>
         </div>
-        <div class="col-auto" v-if="status">
+        <div class="d-flex px-2">
+          <button class="btn btn-info"  @click="createDirectory()">
+            <i class="bi bi-folder-plus"></i> Create directory &nbsp;&nbsp;
+          </button>
+        </div>
+<!--         <div class="col-auto" v-if="status">
           <div class="card bg-light">
             <div class="card-text" style="margin-right: 50px;">
               <strong>{{ selectedDataSizes.length }}</strong> File(s) selected
             </div>
             <div class="card-text">Total size: <strong>{{ selectedDataTotal }}</strong></div>
           </div>
-        </div>
+        </div> -->
       </div>
 
       <hr />
@@ -66,9 +71,12 @@
               <td>{{ item.type }}</td>
               <td>{{ item.size }}</td>
               <td>{{ item.date_created }}</td>
-              <td><button @click="onRowClicked(item)" v-if="item.type !== 'directory'" type="button"
+              <div class="d-flex justify-content-center align-items-center">
+                <td>
+                  <button @click="onRowClicked(item)" v-if="item.type !== 'directory'" type="button"
                   class="btn btn-warning align-items-center"><i class="bi bi-box-arrow-in-down"></i> Download</button>
               </td>
+              </div>
             </tr>
           </tbody>
         </table>
@@ -100,7 +108,7 @@
 
     <!-- PART-3: DELETE FILE(S) -->
     <!-- Modal Component -->
-    <div class="modal" v-if="mShow" v-on:change="modal" tabindex="-1" role="dialog">
+    <div class="modal" v-if="modalShow" v-on:change="modal" tabindex="-1" role="dialog">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-body">Selected file(s) will be deleted?</div>
@@ -112,6 +120,33 @@
       </div>
     </div>
 
+    
+    <!-- PART-4: CREATE DIRECTORY -->
+    <!-- Modal Component -->
+    <Transition>
+      <div class="modal" ref="createDirectory" v-show="modalShow" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Create Directory</h5>
+          </div>
+          <div class="modal-body">
+              <form>
+                <div class="form-group">
+                  <label for="name" class="col-form-label">Directory name</label>
+                  <input type="text" class="form-control" id="name">
+                </div>
+              </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="$emit('close')">Cancel</button>
+            <button type="button" class="btn btn-primary" @click="handleOk">Create</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </Transition>
+
   </div>
 </template>
 
@@ -119,7 +154,7 @@
 <script>
 import filetypeCellRenderer from "../filetypeCellRenderer.js";
 
-import { computed, onBeforeMount, ref } from 'vue';
+import { computed, onBeforeMount, ref, Transition } from 'vue';
 import { mapState, useStore } from 'vuex';
 import { sizeFormatter, dateFormatter } from '../utils.js';
 
@@ -144,12 +179,13 @@ export default {
       currentPage: 1,
       itemsPerPage: 7,
       isLoading: true,
+      modalShow: false,
     }
   },
 
 
   mounted() {
-    console.log("Test");
+    console.log(this.modalShow);
     this.fetchData();
   },
 
@@ -208,11 +244,11 @@ export default {
     },
 
     goBack() {
-      const directoryHistory = this.$store.state.directoryHistory; // Get the directory history
-      if (directoryHistory.length > 1) { // Ensure there are previous directories in history
-        directoryHistory.pop(); // Remove the current directory
-        const previousDirectory = directoryHistory[directoryHistory.length - 1]; // Get the previous directory
-        let directory = this.$store.commit('POP_DIRECTORY'); // Commit mutation to pop directory from history
+      const directoryHistory = this.$store.state.directoryHistory;
+      if (directoryHistory.length > 1) {
+        directoryHistory.pop();
+        const previousDirectory = directoryHistory[directoryHistory.length - 1];
+        this.$store.commit('POP_DIRECTORY');
         this.directory_id = previousDirectory;
         this.fetchData();
       }
@@ -262,8 +298,7 @@ export default {
 
     loadDirectoryContents(directory_id) {
       this.directory_id = directory_id;
-      console.log(this.directory_id);
-      this.$store.dispatch('loadFiles', directory_id);
+      this.fetchData();
     },
 
     deleteFile() {
@@ -273,14 +308,19 @@ export default {
         const result_id = selectedData.map(node => node.file_id)
         console.log(result_id)
         this.result_id = result_id
-        this.mShow = true
+        this.modalShow = true
         this.modal = true
       }
     },
 
+    createDirectory() {
+      this.modalShow = true;
+      console.log(this.modalShow)
+    },
+
     handleOk() {
       this.$store.dispatch('deleteFile', this.result_id)
-      this.mShow = false
+      this.modalShow = false
       this.status = false
     },
 
