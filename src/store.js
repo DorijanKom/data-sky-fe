@@ -2,6 +2,7 @@ import { createApp } from 'vue';
 import Vuex from 'vuex';
 import axios from 'axios';
 import auth from './auth';
+import { error } from 'jquery';
 
 const Vue = createApp({})
 
@@ -11,6 +12,7 @@ export default new Vuex.Store({
   state: {
     rowData: [],
     directoryHistory: [],
+    sharedLink: null,
   },
 
   modules: {
@@ -115,7 +117,23 @@ export default new Vuex.Store({
         .catch((error) => {
           console.error('Error fetching presigned URL:', error);
         })
-    }
+    },
+
+    async shareLink({ commit }, fileId) {
+      try {
+        
+        const response = await axios.get(`api/file/${fileId}`);
+        const sharedLink = response.data;
+
+       
+        commit('SET_SHARED_LINK', sharedLink);
+
+        return sharedLink;
+      } catch (error) {
+        console.error("Error fetching shared link:", error);
+        throw error;
+      }
+    },
   },
 
   mutations: {
@@ -133,6 +151,9 @@ export default new Vuex.Store({
     },
     POP_DIRECTORY(state) {
       state.directoryHistory.pop();
+    },
+    SET_SHARED_LINK(state, link) {
+      state.sharedLink = link;
     },
   },
 })

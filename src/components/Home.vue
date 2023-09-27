@@ -24,7 +24,7 @@
           </button>
         </div>
         <div class="d-flex px-2">
-          <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#createDirectory">
+          <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createDirectory">
             <i class="bi bi-folder-plus"></i> Create directory &nbsp;&nbsp;
           </button>
         </div>
@@ -71,11 +71,16 @@
               <td>{{ item.type }}</td>
               <td>{{ item.size }}</td>
               <td>{{ item.date_created }}</td>
-              <div class="d-flex justify-content-center align-items-center">
-                <td>
+              <div class="d-flex justify-content-center">
+                <th scope="row">
+                <div class="btn-group align-items-center" role="group">
                   <button @click="onRowClicked(item)" v-if="item.type !== 'directory'" type="button"
-                    class="btn btn-warning align-items-center"><i class="bi bi-box-arrow-in-down"></i> Download</button>
-                </td>
+                    class="btn btn-warning btn-sm"><i class="bi bi-box-arrow-in-down"></i> Download</button>
+                  <button @click="shareFile(item)" v-if="item.type !== 'directory'" type="button" data-bs-toggle="modal"
+                    data-bs-target="#shareFile" class="btn btn-info btn-sm"><i class="bi bi-share"></i>
+                    Share...</button>
+                </div>
+              </th>
               </div>
             </tr>
           </tbody>
@@ -146,6 +151,38 @@
       </div>
     </div>
   </Transition>
+
+
+  <!-- PART-5: SHARE FILE -->
+<!-- Modal component -->
+<Transition>
+  <div class="modal fade" id="shareFile" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Share</h5>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="form-group">
+              <label for="link" class="col-form-label">Link:</label>
+              <div class="input-group d-flex align-items-end">
+                <input v-model="sharedLink" ref="sharedLink" class="form-control" id="link" readonly>
+                <div class="input-group-append">
+                  <button type="button" class="btn btn-light" @click="copyLink"><i class="bi bi-copy"></i></button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</Transition>
+
 </template>
 
 
@@ -177,6 +214,7 @@ export default {
       isLoading: true,
       modalShow: false,
       directoryName: "",
+      sharedLink: ""
     }
   },
 
@@ -326,9 +364,22 @@ export default {
 
     onRowClicked(event) {
       let file_id = event.id
-      let filename = event.name
       this.$store.dispatch('downloadFile', file_id)
 
+    },
+
+    async shareFile(event) {
+      let id = event.id
+      const sharedLink = await this.$store.dispatch('shareLink', id);
+      console.log(sharedLink);
+
+      this.sharedLink = sharedLink;
+    },
+
+    copyLink() {
+      this.$refs.sharedLink.select();
+      document.execCommand('copy');
+      window.getSelection().removeAllRanges();
     }
   }
 }

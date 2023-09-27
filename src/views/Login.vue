@@ -58,6 +58,7 @@ export default {
                     alert('Invalid credentials. Please try again.');
                 }
             } catch (error) {
+                alert('Invalid credentials. Please try again.');
                 console.error('Login error:', error)
             }
         }
