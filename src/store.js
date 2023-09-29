@@ -81,14 +81,14 @@ export default new Vuex.Store({
         });
     },
 
-    createDirectory({ dispatch, commit }, newDirectory) {
+    createDirectory({ dispatch, commit }, newDirectory, directory_id) {
       axios
         .post('api/directory/', {
           name: newDirectory.name,
           parent_directory: newDirectory.parent_directory
         })
         .then(() => {
-          dispatch('loadFiles');
+          dispatch('loadFiles', newDirectory.parent_directory);
         })
         .catch(error => {
           console.error('Error:', error);
@@ -98,26 +98,36 @@ export default new Vuex.Store({
     downloadFile({ dispatch }, fileId) {
       axios.get(`api/file/${fileId}`)
         .then((response) => {
-          console.log(response);
+          console.log(response.data);
           const presignedUrl = response.data;
-
-          const filename =
-            response.headers['content-disposition'] ||
-            presignedUrl.substring(presignedUrl.lastIndexOf('/') + 1);
-
+    
           const link = document.createElement('a');
           link.href = presignedUrl;
-          link.download = filename;
-          if (document.body.contains(link)) {
-            document.body.removeChild(link);
-          }
-
+    
+          let filename = response.headers['content-disposition'] ||
+            decodeURIComponent(presignedUrl.split('/').pop());
+    
+          
+            const queryParameterIndex = filename.indexOf('?');
+            if (queryParameterIndex !== -1) {
+              filename = filename.substr(0, queryParameterIndex);
+            }
+    
+          link.setAttribute('download', fileId);
+    
+          document.body.appendChild(link);
+    
+          
           link.click();
+    
+
+          document.body.removeChild(link);
         })
         .catch((error) => {
-          console.error('Error fetching presigned URL:', error);
-        })
+          console.error('Error fetching or processing pre-signed URL:', error);
+        });
     },
+    
 
     async shareLink({ commit }, fileId) {
       try {

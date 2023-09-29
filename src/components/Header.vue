@@ -30,7 +30,7 @@
     <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
       <ul class="navbar-nav">
         <li class="nav-item">
-          <router-link to="/login" class="nav-link text-white" @click="logout">Logout</router-link>
+          <router-link to="/login" class="nav-link text-white" @click="logout">Logout <i class="bi bi-box-arrow-right"></i></router-link>
         </li>
       </ul>
     </div>

@@ -1,14 +1,16 @@
 // auth.js (Vuex store module)
 const state = {
-    isAuthenticated: false,
+    isAuthenticated: localStorage.getItem('isAuthenticated') === 'true' || false,
 };
 
 const mutations = {
     setAuthenticated(state) {
         state.isAuthenticated = true;
+        localStorage.setItem('isAuthenticated', 'true');
     },
     clearAuthenticated(state) {
         state.isAuthenticated = false;
+        localStorage.setItem('isAuthenticated', 'false');
     },
 };
 
